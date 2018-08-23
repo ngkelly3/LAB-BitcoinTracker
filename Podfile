@@ -6,5 +6,8 @@ target 'BitcoinTicker' do
   use_frameworks!
 
   # Pods for BitcoinTicker
+    
+    pod 'SwiftyJSON'
+    pod 'Alamofire'
 
 end
