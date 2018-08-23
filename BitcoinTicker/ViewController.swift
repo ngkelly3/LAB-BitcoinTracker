@@ -7,18 +7,19 @@
 //
 
 import UIKit
+import Alamofire
+import SwiftyJSON
 
 class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
     
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
     let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
     var finalURL = ""
+    var bitcoinPrice: Double = 0
 
     //Pre-setup IBOutlets
     @IBOutlet weak var bitcoinPriceLabel: UILabel!
     @IBOutlet weak var currencyPicker: UIPickerView!
-    
-
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,9 +28,6 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
         currencyPicker.dataSource = self
     }
 
-    
-    //TODO: Place your 3 UIPickerView delegate methods here
-    
     // Specifies the number of columns in the picker
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
@@ -47,55 +45,43 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         print("selected a row! value is \(currencyArray[row])")
+        finalURL = baseURL + "\(currencyArray[row])"
+        getBitcoinPriceData(url: finalURL)
     }
     
+    //MARK: - JSON Parsing
+    /***************************************************************/
     
-//    
-//    //MARK: - Networking
-//    /***************************************************************/
-//    
-//    func getWeatherData(url: String, parameters: [String : String]) {
-//        
-//        Alamofire.request(url, method: .get, parameters: parameters)
-//            .responseJSON { response in
-//                if response.result.isSuccess {
-//
-//                    print("Sucess! Got the weather data")
-//                    let weatherJSON : JSON = JSON(response.result.value!)
-//
-//                    self.updateWeatherData(json: weatherJSON)
-//
-//                } else {
-//                    print("Error: \(String(describing: response.result.error))")
-//                    self.bitcoinPriceLabel.text = "Connection Issues"
-//                }
-//            }
-//
-//    }
-//
-//    
-//    
-//    
-//    
-//    //MARK: - JSON Parsing
-//    /***************************************************************/
-//    
-//    func updateWeatherData(json : JSON) {
-//        
-//        if let tempResult = json["main"]["temp"].double {
-//        
-//        weatherData.temperature = Int(round(tempResult!) - 273.15)
-//        weatherData.city = json["name"].stringValue
-//        weatherData.condition = json["weather"][0]["id"].intValue
-//        weatherData.weatherIconName =    weatherData.updateWeatherIcon(condition: weatherData.condition)
-//        }
-//        
-//        updateUIWithWeatherData()
-//    }
-//    
-
-
-
+    func updateUIWithBitcoinPrice() {
+        bitcoinPriceLabel.text = "\(bitcoinPrice)"
+    }
+    
+    func updateBitcoinLabel(json : JSON) {
+        if let bitcoinPriceData = json["ask"].double {
+            bitcoinPrice = bitcoinPriceData
+            updateUIWithBitcoinPrice()
+        }
+    }
+    
+    //MARK: - Networking
+    /***************************************************************/
+    
+    func getBitcoinPriceData(url: String) {
+        
+        Alamofire.request(url)
+            .responseJSON { response in
+                if response.result.isSuccess {
+                    print("Got bitcoin data! (Maybe)")
+                    // exclamations force optionals to unwrap into their real values
+                    // must check for existence of optional first!
+                    let bitcoinJSON: JSON = JSON(response.result.value!)
+                    self.updateBitcoinLabel(json: bitcoinJSON)
+                } else {
+                    print("Error in getting bitcoin data")
+                    print(response.result.error!)
+                }
+        }
+    }
 
 }
 
